@@ -1,18 +1,13 @@
 package examples.StarterPacMan;
 
-import pacman.Executor;
 import pacman.controllers.PacmanController;
-import pacman.game.Constants;
-import pacman.game.Constants.DM;
 import pacman.game.Constants.GHOST;
 import pacman.game.Constants.MOVE;
 import pacman.game.Game;
 import pacman.game.GameView;
 
 import java.awt.Color;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -23,7 +18,7 @@ import java.util.Random;
  * fill in the getMove() method. Any additional classes you write should either
  * be placed in this package or sub-packages (e.g., entrants.pacman.username).
  */
-public class TreeSearchPacMan extends PacmanController 
+public class FirstCustomAI extends PacmanController
 {
 	private static final Random RANDOM = new Random();
 	private Game game;
