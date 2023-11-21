@@ -47,6 +47,8 @@ public class Main {
         // executor.runGame(new TreeSearchPacMan(), ghosts, speed);
         // executor.runGame(new MyPacMan(), ghosts, speed);
         executor.runGame(new FirstCustomAI(), ghosts, speed);
+                // executor.runGame(new SecondCustomAI(), ghosts, speed);
+
 
     }
 }
