@@ -6,6 +6,7 @@ import pacman.game.Constants;
 import pacman.game.Constants.DM;
 import pacman.game.Constants.GHOST;
 import pacman.game.Constants.MOVE;
+import pacman.game.internal.Ghost;
 import pacman.game.Game;
 import pacman.game.GameView;
 
@@ -143,6 +144,8 @@ public class FirstCustomAI extends PacmanController {
         public double totalCost;
 
 
+
+
         // Important: Segments must be in sequence
         Path(List<Segment> segments) {
             this.segments = segments;
@@ -161,12 +164,26 @@ public class FirstCustomAI extends PacmanController {
 
         // Calculate total cost
         public void calculateTotalCost(int targetNode) {
-            double actualCost = length; // or another appropriate measure of actual cost
+            GHOST closestGhost=getClosesGhost();
+            int closesGhostNode =game.getGhostCurrentNodeIndex(closestGhost);
+            double actualCost = 0; // or another appropriate measure of actual cost
+
+             if (closesGhostNode != Integer.MAX_VALUE && closesGhostNode != -1) {
+               actualCost=calculateHeuristic(closesGhostNode);
+            }
             double heuristic = calculateHeuristic(targetNode);
 
-            System.out.println("heuristic: " +heuristic);
-            totalCost = actualCost + heuristic;
+            if (game.isGhostEdible(closestGhost)) {
+                totalCost =  heuristic+actualCost ;
+            }else{
+                 totalCost =  heuristic-actualCost ;
+            }
+
+
+            
         }
+
+
 
         // Implement compareTo method for Comparable interface
         @Override
@@ -181,7 +198,7 @@ public class FirstCustomAI extends PacmanController {
             for (GHOST ghost : ghosts)
                 ghostsName += ghost.name() + " ";
         
-            String text = description + "::" + " value:" + value +" cost:" + totalCost +" end:" + end + "target : " + getTargetNode()+ ", safe:" + (safe ? "safe" : "unsafe") + ", pills:"
+            String text = description + "::" + " value:" + value +" cost:" + totalCost + ", safe:" + (safe ? "safe" : "unsafe") + ", pills:"
                     + pillsCount + ", power pills:" + powerPillsCount + ", ghost:" + ghostsName;
 
             if (!safe)
@@ -197,13 +214,13 @@ public class FirstCustomAI extends PacmanController {
 
             int segmentsCount = segments.size();
 
-            calculateTotalCost(getTargetNode());
 
             if (segmentsCount > 0) {
                 Segment firstSegment = segments.get(0);
                 Segment lastSegment = segments.get(segmentsCount - 1);
                 start = firstSegment.start;
                 end = lastSegment.end;
+                calculateTotalCost(getTargetNode());
                 length = lastSegment.lengthSoFar;
                 pillsCount = lastSegment.pillsCount;
                 value = pillsCount;
@@ -264,29 +281,48 @@ public class FirstCustomAI extends PacmanController {
             return closestPowerPill;
         } else {
             // No active pills or power pills, go for the nearest ghost node
-            GHOST[] ghosts = GHOST.values();
-            int closestGhostNode = Integer.MAX_VALUE;
             
-            for (GHOST ghost : ghosts) {
-                if (game.isGhostEdible(ghost)) {
-                    int ghostNode = game.getGhostCurrentNodeIndex(ghost);
-                    if (ghostNode != -1) {
-                        int distance = game.getShortestPathDistance(pacmanCurrentNodeIndex, ghostNode);
-                        if (distance < closestGhostNode) {
-                            closestGhostNode = distance;
-                        }
-                    }
-                }
-            }
             
             // If a reachable edible ghost is found, set it as the target
-            if (closestGhostNode != Integer.MAX_VALUE) {
-                return closestGhostNode;
+            int closesGhostNode=game.getGhostCurrentNodeIndex(getClosesGhost());
+            if (closesGhostNode != Integer.MAX_VALUE && closesGhostNode != -1) {
+                return closesGhostNode;
             }
             
             // If no active pills, power pills, or edible ghosts, return the current node
             return pacmanCurrentNodeIndex;
         }
+    }
+
+    /**
+     * InnerFirstCustomAI
+     */
+    
+
+    public GHOST getClosesGhost() {
+        GHOST[] ghosts = GHOST.values();
+        //closestGhost[ghost,node]
+        GHOST closestGhost=ghosts[0];
+        int closestGhostNodeDistance = Integer.MAX_VALUE;
+
+        for (GHOST ghost : ghosts) {
+                int ghostNode = game.getGhostCurrentNodeIndex(ghost);
+                int distance = game.getShortestPathDistance(pacmanCurrentNodeIndex, ghostNode);
+                if (distance < closestGhostNodeDistance) {
+                    closestGhostNodeDistance=distance;
+                    closestGhost=ghost;
+                }
+
+        }
+        
+        if (closestGhostNodeDistance != Integer.MAX_VALUE) {
+            
+            return closestGhost;
+        }
+        return null;
+
+  
+
     }
     
 
@@ -382,6 +418,7 @@ public class FirstCustomAI extends PacmanController {
 
                     Collections.reverse(pathSegments);
                     Path path = new Path(pathSegments);
+
                     paths.add(path);
 
                     // Pop out the latest pending segment and set it as current segment

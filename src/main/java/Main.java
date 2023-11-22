@@ -43,10 +43,10 @@ public class Main {
         int speed = 1; // smaller number will run faster
 
         MASController ghosts = new POCommGhosts(50);
-        // executor.runGame(new TreeSearchPacMan(), ghosts, speed);
+        executor.runGame(new TreeSearchPacMan(), ghosts, speed);
         // executor.runGame(new TreeSearchPacMan(), ghosts, speed);
         // executor.runGame(new MyPacMan(), ghosts, speed);
-        executor.runGame(new FirstCustomAI(), ghosts, speed);
+        // executor.runGame(new FirstCustomAI(), ghosts, speed);
                 // executor.runGame(new SecondCustomAI(), ghosts, speed);
 
 
