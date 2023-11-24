@@ -3,7 +3,14 @@ import examples.StarterGhostComm.Blinky;
 import examples.StarterGhostComm.Inky;
 import examples.StarterGhostComm.Pinky;
 import examples.StarterGhostComm.Sue;
+import examples.StarterISMCTS.InformationSetMCTSPacMan;
+import examples.StarterNNPacMan.NNTrainer;
+import examples.StarterNNPacMan.NeuralNet;
+import examples.StarterNNPacMan.examples.NNLocPacMan;
+import examples.StarterNNPacMan.examples.NNPacMan;
+import examples.StarterNNPacMan.examples.SimpleNNLocPacMan;
 import examples.StarterPacMan.*;
+import examples.demo.DemoPacMan;
 import pacman.Executor;
 import pacman.controllers.IndividualGhostController;
 import pacman.controllers.MASController;
@@ -43,11 +50,18 @@ public class Main {
         int speed = 1; // smaller number will run faster
 
         MASController ghosts = new POCommGhosts(50);
-        executor.runGame(new TreeSearchPacMan(), ghosts, speed);
         // executor.runGame(new TreeSearchPacMan(), ghosts, speed);
         // executor.runGame(new MyPacMan(), ghosts, speed);
-        // executor.runGame(new FirstCustomAI(), ghosts, speed);
-                // executor.runGame(new SecondCustomAI(), ghosts, speed);
+        // executor.runGame(new InformationSetMCTSPacMan(), ghosts, speed);
+        // executor.runGame(new FirstCustomAI(), ghosts, speed);//A* Algo
+        // executor.runGame(new SecondCustomAI(), ghosts, speed);
+        NNLocPacMan nnLocPacMan=new NNLocPacMan(null);
+
+                executor.runGame(nnLocPacMan, ghosts, speed);
+
+
+
+          
 
 
     }

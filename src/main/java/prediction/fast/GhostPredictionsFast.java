@@ -28,7 +28,7 @@ public class GhostPredictionsFast {
     public GhostPredictionsFast(Maze maze) {
         this.maze = maze;
         // Cut out the end node - it always has no neighbours
-        mazeSize = maze.graph.length - 1;
+        mazeSize = maze.graph.length -1;
         probabilities = new double[mazeSize * numGhosts];
         backProbabilities = new double[mazeSize * numGhosts];
         this.beenSpotted = new EnumMap<>(GHOST.class);
@@ -49,12 +49,19 @@ public class GhostPredictionsFast {
 
     public void observe(GHOST ghost, int index, MOVE lastMoveMade) {
         int startIndex = (ghost.ordinal() * mazeSize);
-        int arrayIndex = startIndex + index;
-        Arrays.fill(probabilities, startIndex, startIndex + mazeSize, 0);
+        int arrayIndex = startIndex + index -1;
+        if (arrayIndex!=-1) {
+              Arrays.fill(probabilities, startIndex, startIndex + mazeSize, 0);
         Arrays.fill(moves, startIndex, startIndex + mazeSize, null);
         probabilities[arrayIndex] = 1.0d;
         beenSpotted.put(ghost, true);
         moves[arrayIndex] = lastMoveMade;
+        }
+        else{
+                        observeNotPresent(ghost,index);
+
+        }
+      
     }
 
     public void observeNotPresent(GHOST ghost, int index) {

@@ -41,8 +41,10 @@ public class InformationSetMCTSPacMan extends PacmanController implements Drawab
         for (int i = 0; i < 256; i++) {
             redAlphas[i] = new Color(255, 0, 0, i);
         }
+        System.out.println(Arrays.toString(GHOST.values()));
 
         ghostEdibleTime = new int[GHOST.values().length];
+
     }
 
     @ObjectDef("IS-MCTS")
