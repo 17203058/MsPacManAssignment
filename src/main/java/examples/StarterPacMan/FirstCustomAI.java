@@ -32,6 +32,8 @@ public class FirstCustomAI extends PacmanController {
     int pathLengthBase = 70; // 70, 70, 100 // Make it longer when no pills around
     int minGhostDistanceBase = 100; // 80, 100, 100
     private List<Path> paths = new ArrayList<>();
+    private static int totalNumberOfGhostEaten=0;
+
 
     private int getRandomInt(int min, int max) {
         if (min >= max) {
@@ -105,7 +107,14 @@ public class FirstCustomAI extends PacmanController {
             }
         }
 
-        return bestPathMove;
+        System.out.println("time : "+game.getTotalTime());
+
+        if (game.getNumGhostsEaten()>0) {
+                totalNumberOfGhostEaten+=game.getNumGhostsEaten();
+        
+        }
+            System.out.println("number of ghost eaten : "+totalNumberOfGhostEaten);
+                return bestPathMove;
     }
 
     private MOVE getRandomMove() {

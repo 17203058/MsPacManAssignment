@@ -313,7 +313,7 @@ class Node {
         PacManLocation next = pacManLocation.copy();
         // Loop until we get to the next decision
         MOVE bestMOVE = (parent == null) ? pacManLocation.allPossibleMovesIncludingBackwards()[bestAction] : pacManLocation.possibleMoves()[bestAction];
-//        MOVE bestMOVE =  pacManLocation.possibleMoves()[bestAction];
+    //    MOVE bestMOVE =  pacManLocation.possibleMoves()[bestAction];
         int depth = currentDepth++;
         next.update(bestMOVE);
         PillModel childModel = pillModel.copy();

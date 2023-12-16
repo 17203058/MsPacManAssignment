@@ -6,6 +6,7 @@ import examples.StarterGhostComm.Sue;
 import examples.StarterISMCTS.InformationSetMCTSPacMan;
 import examples.StarterNNPacMan.NNTrainer;
 import examples.StarterNNPacMan.NeuralNet;
+import examples.StarterNNPacMan.NeuralPacMan;
 import examples.StarterNNPacMan.examples.NNLocPacMan;
 import examples.StarterNNPacMan.examples.NNPacMan;
 import examples.StarterNNPacMan.examples.SimpleNNLocPacMan;
@@ -18,8 +19,15 @@ import pacman.controllers.examples.po.POCommGhosts;
 import pacman.game.Constants.*;
 import pacman.game.internal.POType;
 
-
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.EnumMap;
+import java.util.List;
+import java.util.Scanner;
+import java.util.stream.Collectors;
 
 /**
  * Created by pwillic on 06/05/2016.
@@ -33,8 +41,8 @@ public class Main {
         Executor executor = new Executor.Builder()
                 .setVisual(true)
                 .setPacmanPO(false)
-                .setTickLimit(20000)
-                .setScaleFactor(2) // Increase game visual size
+                .setTickLimit(30000)
+                .setScaleFactor(2.5) // Increase game visual size
                 .setPOType(POType.RADIUS) // pacman sense objects around it in a radius wide fashion instead of straight
                                           // line sights
                 .setSightLimit(sightRadius) // The sight radius limit, set to maximum
@@ -53,16 +61,11 @@ public class Main {
         // executor.runGame(new TreeSearchPacMan(), ghosts, speed);
         // executor.runGame(new MyPacMan(), ghosts, speed);
         // executor.runGame(new InformationSetMCTSPacMan(), ghosts, speed);
-        // executor.runGame(new FirstCustomAI(), ghosts, speed);//A* Algo
+        executor.runGame(new FirstCustomAI(), ghosts, speed);//A* Algo
         // executor.runGame(new SecondCustomAI(), ghosts, speed);
-        NNLocPacMan nnLocPacMan=new NNLocPacMan(null);
+        // executor.runGame(new ThirdCustomAI(), ghosts, speed);
 
-                executor.runGame(nnLocPacMan, ghosts, speed);
-
-
-
-          
-
+     
 
     }
 }

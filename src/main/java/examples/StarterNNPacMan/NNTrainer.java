@@ -59,7 +59,7 @@ public class NNTrainer {
 
 
         final Genotype<DoubleGene> result = engine.stream()
-                .limit(limit.byExecutionTime(Duration.ofMinutes(120)))
+                .limit(limit.byExecutionTime(Duration.ofMinutes(2)))
 //                .limit(100)
                 .peek(x -> {
                     System.setOut(out);

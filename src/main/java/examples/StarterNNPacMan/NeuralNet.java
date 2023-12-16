@@ -1,8 +1,11 @@
 package examples.StarterNNPacMan;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -141,10 +144,13 @@ public class NeuralNet {
         writer.close();
     }
 
+  
     public static NeuralNet readFromFile(String filename) throws IOException {
         ClassLoader cl = NeuralNet.class.getClassLoader();
         cl.getResourceAsStream(filename);
+        System.out.println(cl.getResourceAsStream(filename).toString());
         Scanner scanner = new Scanner(cl.getResourceAsStream(filename));
+
         List<String> lines = new ArrayList<>();
         while(scanner.hasNextLine()){
             lines.add(scanner.nextLine());

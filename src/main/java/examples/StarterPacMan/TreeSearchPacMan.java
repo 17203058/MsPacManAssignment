@@ -32,6 +32,7 @@ public class TreeSearchPacMan extends PacmanController
 	int pathLengthBase = 70; // 70, 70, 100 // Make it longer when no pills around
 	int minGhostDistanceBase = 100; // 80, 100, 100
 	private List<Path> paths = new ArrayList<>();
+	private static int totalNumberOfGhostEaten=0;
 
 	private int getRandomInt(int min, int max) {
 		if (min >= max) {
@@ -102,6 +103,13 @@ public class TreeSearchPacMan extends PacmanController
 				}
 			}
 		}
+System.out.println("time : "+game.getTotalTime());
+
+if (game.getNumGhostsEaten()>0) {
+		totalNumberOfGhostEaten+=game.getNumGhostsEaten();
+
+}
+	System.out.println("number of ghost eaten : "+totalNumberOfGhostEaten);
 
 		return bestPathMove;
 	}
@@ -149,10 +157,10 @@ public class TreeSearchPacMan extends PacmanController
 			String text = description + "::" + " value:" + value + ", safe:" + (safe ? "safe" : "unsafe") + ", pills:"
 					+ pillsCount + ", power pills:" + powerPillsCount + ", ghost:" + ghostsName;
 
-			if (!safe)
-				System.err.println(text);
-			else
-				System.out.println(text);
+			// if (!safe)
+			// 	System.err.println(text);
+			// else
+			// 	System.out.println(text);
 
 			render(game);
 		}
@@ -181,7 +189,7 @@ public class TreeSearchPacMan extends PacmanController
 								int distance = game.getShortestPathDistance(pacmanCurrentNodeIndex,
 										game.getGhostCurrentNodeIndex(ghost));
 								if (distance < 10)
-									value += 1;// 15;
+									value += 200;// 15;
 								else
 									value += 1;// 10;
 							}
@@ -355,7 +363,7 @@ public class TreeSearchPacMan extends PacmanController
 		for (Path path : paths)
 			path.process();
 
-		System.out.println("\nPath search complete found " + paths.size() + " path");
+		// System.out.println("\nPath search complete found " + paths.size() + " path");
 		return paths;
 	}
 }
