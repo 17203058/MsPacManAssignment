@@ -1,8 +1,11 @@
 
-import examples.StarterGhostComm.Blinky;
-import examples.StarterGhostComm.Inky;
-import examples.StarterGhostComm.Pinky;
-import examples.StarterGhostComm.Sue;
+import examples.QLearning.QLearner;
+import examples.QLearning.QTable;
+import examples.StarterGhost.Blinky;
+import examples.StarterGhost.Inky;
+import examples.StarterGhost.POGhostRandom;
+import examples.StarterGhost.Pinky;
+import examples.StarterGhost.Sue;
 import examples.StarterISMCTS.InformationSetMCTSPacMan;
 import examples.StarterNNPacMan.NNTrainer;
 import examples.StarterNNPacMan.NeuralNet;
@@ -16,6 +19,7 @@ import pacman.Executor;
 import pacman.controllers.IndividualGhostController;
 import pacman.controllers.MASController;
 import pacman.controllers.examples.po.POCommGhosts;
+import pacman.controllers.examples.po.POGhosts;
 import pacman.game.Constants.*;
 import pacman.game.internal.POType;
 
@@ -57,11 +61,14 @@ public class Main {
 
         int speed = 1; // smaller number will run faster
 
-        MASController ghosts = new POCommGhosts(50);
-        // executor.runGame(new TreeSearchPacMan(), ghosts, speed);
+
+        MASController ghosts = new examples.StarterGhostAstar.POGhostsAstar();
+
+
+
+        executor.runGame(new TreeSearchPacMan(), ghosts, speed);
         // executor.runGame(new MyPacMan(), ghosts, speed);
         // executor.runGame(new InformationSetMCTSPacMan(), ghosts, speed);
-        executor.runGame(new FirstCustomAI(), ghosts, speed);//A* Algo
         // executor.runGame(new SecondCustomAI(), ghosts, speed);
         // executor.runGame(new ThirdCustomAI(), ghosts, speed);
 

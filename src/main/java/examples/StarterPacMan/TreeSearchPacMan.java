@@ -162,7 +162,7 @@ if (game.getNumGhostsEaten()>0) {
 			// else
 			// 	System.out.println(text);
 
-			render(game);
+			// render(game);
 		}
 
 		public void process() {
