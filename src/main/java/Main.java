@@ -62,7 +62,9 @@ public class Main {
         int speed = 1; // smaller number will run faster
 
 
-        MASController ghosts = new examples.StarterGhostMCTS.POGhostsMCTS();
+        MASController ghosts = new examples.StarterGhostAstar.POGhostsAstar();
+        // MASController ghosts = new POCommGhosts();
+
 
 
 
