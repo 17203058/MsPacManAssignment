@@ -46,6 +46,7 @@ public class TreeSearchPacMan extends PacmanController
 	@Override
 	public MOVE getMove(Game game, long timeDue) {
 		this.game = game;
+
 		pacmanCurrentNodeIndex = game.getPacmanCurrentNodeIndex();
 		pacmanLastMoveMade = game.getPacmanLastMoveMade();
 
@@ -103,13 +104,13 @@ public class TreeSearchPacMan extends PacmanController
 				}
 			}
 		}
-System.out.println("time : "+game.getTotalTime());
+// System.out.println("time : "+game.getTotalTime());
 
 if (game.getNumGhostsEaten()>0) {
 		totalNumberOfGhostEaten+=game.getNumGhostsEaten();
 
 }
-	System.out.println("number of ghost eaten : "+totalNumberOfGhostEaten);
+	// System.out.println("number of ghost eaten : "+totalNumberOfGhostEaten);
 
 		return bestPathMove;
 	}

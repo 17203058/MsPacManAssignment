@@ -9,25 +9,18 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-
-import pacman.Executor;
-import pacman.controllers.PacmanController;
-import pacman.game.Constants;
-import pacman.game.Constants.DM;
+import examples.StarterPacMan.TreeSearchPacMan;
 import pacman.game.Constants.GHOST;
-import pacman.game.Constants.MOVE;
-import pacman.game.internal.Ghost;
-import pacman.game.Game;
+
 import pacman.game.GameView;
+import pacman.game.comms.BasicMessage;
+import pacman.game.comms.Message;
+import pacman.game.comms.Messenger;
 
 import java.awt.Color;
-import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.Arrays;
+
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.List;
-import java.util.Random;
 
 /**
  * Created by piers on 16/02/17.
@@ -37,6 +30,9 @@ public class POGhostAstar extends IndividualGhostController {
     private final static int PILL_PROXIMITY = 15; // if Ms Pac-Man is this close to a power pill, back away
     Random rnd = new Random();
 
+    private int TICK_THRESHOLD;
+    private int tickSeen = -1;
+
     public POGhostAstar(Constants.GHOST ghost) {
         super(ghost);
     }
@@ -45,8 +41,10 @@ public class POGhostAstar extends IndividualGhostController {
     private Game game;
     private int ghostCurrentNodeIndex;
     MOVE ghostLastMoveMade;
+    private int lastPacmanIndex = -1;
+
     int pathLengthBase = 70; // 70, 70, 100 // Make it longer when no pills around
-    int minGhostDistanceBase = 100; // 80, 100, 100
+    int minPacmanDistanceBase = 100; // 80, 100, 100
     private List<Path> paths = new ArrayList<>();
     private static int totalNumberOfGhostEaten = 0;
 
@@ -59,80 +57,157 @@ public class POGhostAstar extends IndividualGhostController {
         return r.nextInt((max - min) + 1) + min;
     }
 
+    // This helper function checks if Ms Pac-Man is close to an available power pill
+    private boolean closeToPower(Game game) {
+        int[] powerPills = game.getPowerPillIndices();
+
+        for (int i = 0; i < powerPills.length; i++) {
+            Boolean powerPillStillAvailable = game.isPowerPillStillAvailable(i);
+            int pacmanNodeIndex = game.getPacmanCurrentNodeIndex();
+
+            if (powerPillStillAvailable == null || pacmanNodeIndex == -1) {
+                return false;
+            }
+            if (powerPillStillAvailable
+                    && game.getShortestPathDistance(powerPills[i], pacmanNodeIndex) < PILL_PROXIMITY) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     @Override
     public MOVE getMove(Game game, long timeDue) {
-        if (game.doesGhostRequireAction(ghost))        //if ghost requires an action
-        {
         this.game = game;
-        ghostCurrentNodeIndex = game.getGhostCurrentNodeIndex(ghost);
-        ghostLastMoveMade =  game.getGhostLastMoveMade(ghost);
+        if (lastPacmanIndex == -1) {
+            lastPacmanIndex = game.getPacManInitialNodeIndex();
 
-        // Random path length and minGhostDistance
-        int pathLength = pathLengthBase /* + getRandomInt(-50, 10) */;
-
-        // Get possible paths
-        paths = getPaths(pathLength);
-
-        // Sort the path with highest value DESC
-        Collections.sort(paths, new PathValueComparator());
-
-        for (Path path : paths) {
-            path.summary(game);
         }
 
-        Path bestPath = paths.get(0);
-        for (Segment segment : bestPath.segments)
-            GameView.addLines(game, Color.CYAN, segment.start, segment.end);
-        MOVE bestPathMove = game.getMoveToMakeToReachDirectNeighbour(ghostCurrentNodeIndex, bestPath.start);
+        if (game.doesGhostRequireAction(ghost)) // if ghost requires an action
+        {
 
-        // No pills around while at junction but has safe paths, choose random safe path
-        if (bestPath.value == 0 && game.isJunction(ghostCurrentNodeIndex)) {
-            // Get only safe paths from paths
-            List<MOVE> safeMoves = new ArrayList<>();
+            int currentTick = game.getCurrentLevelTime();
+            if (currentTick <= 2 || currentTick - tickSeen >= TICK_THRESHOLD) {
+                lastPacmanIndex = -1;
+                tickSeen = -1;
+            }
+
+            // Can we see PacMan? If so tell people and update our info
+            int pacmanIndex = game.getPacmanCurrentNodeIndex();
+            int currentIndex = game.getGhostCurrentNodeIndex(ghost);
+            Messenger messenger = game.getMessenger();
+            if (pacmanIndex != -1) {
+                lastPacmanIndex = pacmanIndex;
+                tickSeen = game.getCurrentLevelTime();
+                if (messenger != null) {
+                    messenger.addMessage(new BasicMessage(ghost, null, BasicMessage.MessageType.PACMAN_SEEN,
+                            pacmanIndex, game.getCurrentLevelTime()));
+                }
+            }
+
+            // Has anybody else seen PacMan if we haven't?
+            if (pacmanIndex == -1 && game.getMessenger() != null) {
+                for (Message message : messenger.getMessages(ghost)) {
+                    if (message.getType() == BasicMessage.MessageType.PACMAN_SEEN) {
+                        if (message.getTick() > tickSeen && message.getTick() < currentTick) { // Only if it is newer
+                                                                                               // information
+                            lastPacmanIndex = message.getData();
+                            tickSeen = message.getTick();
+                        }
+                    }
+                }
+            }
+            if (pacmanIndex == -1) {
+                pacmanIndex = lastPacmanIndex;
+            }
+
+            if (pacmanIndex != -1) {
+                lastPacmanIndex = game.getPacmanCurrentNodeIndex();
+
+            }
+
+            // System.out.println(lastPacmanIndex + ":" + pacmanIndex);
+
+            ghostCurrentNodeIndex = game.getGhostCurrentNodeIndex(ghost);
+            ghostLastMoveMade = game.getGhostLastMoveMade(ghost);
+
+            // Random path length and minPacmanDistance
+            int pathLength = pathLengthBase /* + getRandomInt(-50, 10) */;
+
+            // Get possible paths
+            paths = getPaths(pathLength);
+
+            // Sort the path with highest value DESC
+            Collections.sort(paths, new PathValueComparator());
+
             for (Path path : paths) {
-                if (path.safe) {
-                    MOVE safeMove = game.getMoveToMakeToReachDirectNeighbour(ghostCurrentNodeIndex, path.start);
-                    safeMoves.add(safeMove);
+                path.summary(game);
+            }
+
+            Path bestPath = paths.get(0);
+            for (Segment segment : bestPath.segments)
+                GameView.addLines(game, Color.CYAN, segment.start, segment.end);
+            MOVE bestPathMove = game.getMoveToMakeToReachDirectNeighbour(ghostCurrentNodeIndex, bestPath.start);
+
+            if (bestPath.value == 0 && game.isJunction(ghostCurrentNodeIndex)) {
+                // Get only safe paths from paths
+                List<MOVE> safeMoves = new ArrayList<>();
+                for (Path path : paths) {
+                    if (path.safe) {
+                        MOVE safeMove = game.getMoveToMakeToReachDirectNeighbour(ghostCurrentNodeIndex, path.start);
+                        safeMoves.add(safeMove);
+                    }
+                }
+
+                // Random safe path
+                while (true) {
+                    MOVE randomMove = getRandomMove();
+                    if (safeMoves.contains(randomMove)) {
+                        bestPathMove = randomMove;
+                        break;
+                    }
                 }
             }
 
-            // Random safe path
-            while (true) {
-                MOVE randomMove = getRandomMove();
-                if (safeMoves.contains(randomMove)) {
-                    bestPathMove = randomMove;
-                    break;
-                }
+            // No safe paths
+            else if (bestPath.value < 0) {
+                bestPathMove = ghostLastMoveMade;
             }
-        }
 
-        // No safe paths
-        else if (bestPath.value < 0) {
-            bestPathMove = ghostLastMoveMade;
-        }
+            // if the current best move is no better than previous move, then we maintain
+            // previous move, this is to avoid pacman flickering movement
+            else if (bestPathMove != ghostLastMoveMade) {
+                for (Path path : paths) {
+                    MOVE move = game.getMoveToMakeToReachDirectNeighbour(ghostCurrentNodeIndex, path.start);
 
-        // if the current best move is no better than previous move, then we maintain
-        // previous move, this is to avoid pacman flickering movement
-        else if (bestPathMove != ghostLastMoveMade) {
-            for (Path path : paths) {
-                MOVE move = game.getMoveToMakeToReachDirectNeighbour(ghostCurrentNodeIndex, path.start);
-
-                if (move == ghostLastMoveMade && path.value == bestPath.value) {
-                    bestPathMove = move;
-                    break;
+                    if (move == ghostLastMoveMade && path.value == bestPath.value) {
+                        bestPathMove = move;
+                        break;
+                    }
                 }
+
+                System.out.println("time : " + game.getTotalTime());
+
+                if (game.getNumGhostsEaten() > 0) {
+                    totalNumberOfGhostEaten += game.getNumGhostsEaten();
+
+                }
+                System.out.println("number of ghost eaten : " + totalNumberOfGhostEaten);
+                // return bestPathMove;
+
             }
-        }
+            return bestPathMove;
 
-        System.out.println("time : " + game.getTotalTime());
+        } 
+        return null;
+        // else {
+        //     Constants.MOVE[] possibleMoves = game.getPossibleMoves(game.getGhostCurrentNodeIndex(ghost),
+        //             game.getGhostLastMoveMade(ghost));
+        //     return possibleMoves[rnd.nextInt(possibleMoves.length)];
+        // }
 
-        if (game.getNumGhostsEaten() > 0) {
-            totalNumberOfGhostEaten += game.getNumGhostsEaten();
-
-        }
-        System.out.println("number of ghost eaten : " + totalNumberOfGhostEaten);
-        return bestPathMove;
-    }else {return null;}
     }
 
     private MOVE getRandomMove() {
@@ -175,8 +250,8 @@ public class POGhostAstar extends IndividualGhostController {
         }
 
         public void render(Game game) {
-            // for (Segment segment : segments)
-            // GameView.addLines(game, segment.color, segment.start, segment.end);
+            for (Segment segment : segments)
+                GameView.addLines(game, segment.color, segment.start, segment.end);
         }
 
         // Calculate heuristic value using Euclidean distance
@@ -186,20 +261,14 @@ public class POGhostAstar extends IndividualGhostController {
 
         // Calculate total cost
         public void calculateTotalCost(int targetNode) {
-            GHOST closestGhost = getClosesGhost();
-            int closesGhostNode = game.getGhostCurrentNodeIndex(closestGhost);
-            double actualCost = 0; // or another appropriate measure of actual cost
 
-            if (closesGhostNode != Integer.MAX_VALUE && closesGhostNode != -1) {
-                actualCost = calculateHeuristic(closesGhostNode);
-            }
             double heuristic = calculateHeuristic(targetNode);
-
-            // if (game.isGhostEdible(closestGhost)) {
-            //     totalCost = heuristic + actualCost;
-            // } else {
-            //     totalCost = heuristic - actualCost;
-            // }
+            int actualCost=100;
+            if (!game.isGhostEdible(ghost)) {
+                totalCost = heuristic-actualCost;
+            }if (game.isGhostEdible(ghost) || closeToPower(game)) {
+                totalCost = heuristic+actualCost;
+            }
 
         }
 
@@ -214,16 +283,17 @@ public class POGhostAstar extends IndividualGhostController {
             for (GHOST ghost : ghosts)
                 ghostsName += ghost.name() + " ";
 
-            String text = description + "::" + " value:" + value + " cost:" + totalCost + ", safe:"
-                    + (safe ? "safe" : "unsafe") + ", pills:"
-                    + pillsCount + ", power pills:" + powerPillsCount + ", ghost:" + ghostsName;
+            // String text = description + "::" + " value:" + value + " cost:" + totalCost +
+            // ", safe:"
+            // + (safe ? "safe" : "unsafe") + ", pills:"
+            // + pillsCount + ", power pills:" + powerPillsCount + ", ghost:" + ghostsName;
 
-            if (!safe)
-                System.err.println(text);
-            else
-                System.out.println(text);
+            // if (!safe)
+            // System.err.println(text);
+            // else
+            // System.out.println(text);
 
-            render(game);
+            // render(game);
         }
 
         public void process() {
@@ -236,37 +306,23 @@ public class POGhostAstar extends IndividualGhostController {
                 Segment lastSegment = segments.get(segmentsCount - 1);
                 start = firstSegment.start;
                 end = lastSegment.end;
-                calculateTotalCost(getTargetNode());
                 length = lastSegment.lengthSoFar;
-                pillsCount = lastSegment.pillsCount;
-                value = pillsCount;
-                powerPillsCount = lastSegment.powerPillsCount;
+                value = 0;
+                calculateTotalCost(lastPacmanIndex);
+
                 int unsafeSegmentsCount = 0;
 
                 for (Segment segment : segments) {
-                    if (!segment.ghosts.isEmpty()) {
-                        ghosts.addAll(segment.ghosts);
-                        for (GHOST ghost : ghosts)
-                            if (game.isGhostEdible(ghost)) {
-                                int distance = game.getShortestPathDistance(ghostCurrentNodeIndex,
-                                        game.getGhostCurrentNodeIndex(ghost));
-                                if (distance < 10)
-                                    value += 1;// 15;
-                                else
-                                    value += 1;// 10;
-                            }
-                    }
 
+                    value += segment.value;
                     if (segment.parent != null && !segment.parent.safe)
                         segment.safe = segment.parent.safe;
 
                     if (!segment.safe) {
                         unsafeSegmentsCount++;
-                        value -= 10;
+                        value -= 100;
                         segment.color = Color.RED;
                     }
-
-                    value += segment.powerPillsCount * 1;
 
                     description += segment.direction.toString() + " ";
                 }
@@ -278,79 +334,25 @@ public class POGhostAstar extends IndividualGhostController {
 
     }
 
-    private int getTargetNode() {
-        int[] activePills = game.getActivePillsIndices();
-        int[] activePowerPills = game.getActivePowerPillsIndices();
-
-        if (activePills.length > 0) {
-            // Find the closest pill among all active pills
-            int closestPill = game.getClosestNodeIndexFromNodeIndex(ghostCurrentNodeIndex, activePills, DM.PATH);
-            return closestPill;
-        } else if (activePowerPills.length > 0) {
-            // If no regular pills, go for power pills
-            int closestPowerPill = game.getClosestNodeIndexFromNodeIndex(ghostCurrentNodeIndex, activePowerPills,
-                    DM.PATH);
-            return closestPowerPill;
-        } else {
-            // No active pills or power pills, go for the nearest ghost node
-
-            // If a reachable edible ghost is found, set it as the target
-            int closesGhostNode = game.getGhostCurrentNodeIndex(getClosesGhost());
-            if (closesGhostNode != Integer.MAX_VALUE && closesGhostNode != -1) {
-                return closesGhostNode;
-            }
-
-            // If no active pills, power pills, or edible ghosts, return the current node
-            return ghostCurrentNodeIndex;
-        }
-    }
-
     /**
      * InnerFirstCustomAI
      */
 
-    public GHOST getClosesGhost() {
-        GHOST[] ghosts = GHOST.values();
-        // closestGhost[ghost,node]
-        GHOST closestGhost = ghosts[0];
-        int closestGhostNodeDistance = Integer.MAX_VALUE;
-
-        for (GHOST ghost : ghosts) {
-            int ghostNode = game.getGhostCurrentNodeIndex(ghost);
-            int distance = game.getShortestPathDistance(ghostCurrentNodeIndex, ghostNode);
-            if (distance < closestGhostNodeDistance) {
-                closestGhostNodeDistance = distance;
-                closestGhost = ghost;
-            }
-
-        }
-
-        if (closestGhostNodeDistance != Integer.MAX_VALUE) {
-
-            return closestGhost;
-        }
-        return null;
-
-    }
-
     public class Segment {
         public int start;
         public int end;
-        public int pillsCount = 0;
-        public int powerPillsCount = 0;
+        public int value;
         public int lengthSoFar;
         public MOVE direction;
         public Segment parent;
-        public List<GHOST> ghosts = new ArrayList<>();
         public Color color = Color.GREEN;
         public boolean safe = true;
     }
 
     public List<Path> getPaths(int maxPathLength) {
         MOVE[] startingPossibleMoves = game.getPossibleMoves(ghostCurrentNodeIndex);
-        System.out.println(Arrays.toString(startingPossibleMoves));
         List<Path> paths = new ArrayList<>();
-        int minGhostDistance = minGhostDistanceBase /* + getRandomInt(10, 30) */;
+        int minPacmanDistance = minPacmanDistanceBase /* + getRandomInt(10, 30) */;
 
         // Start searching from the possible moves at the current pacman location
         for (MOVE startingPossibleMove : startingPossibleMoves) {
@@ -364,51 +366,27 @@ public class POGhostAstar extends IndividualGhostController {
             currentSegment.start = currentNode;
             currentSegment.parent = null;
             currentSegment.direction = startingPossibleMove;
+            currentSegment.value = 0;
             currentSegment.lengthSoFar++;
 
-            // Get all ghosts node index in a list
-            List<Integer> ghostNodeIndices = new ArrayList<>();
-            GHOST[] ghosts = GHOST.values();
-            for (GHOST ghost : ghosts)
-                ghostNodeIndices.add(game.getGhostCurrentNodeIndex(ghost));
-
-            // Loop each step
             do {
-                // Check pills and power pills
-                int pillIndex = game.getPillIndex(currentNode);
-                int powerPillIndex = game.getPowerPillIndex(currentNode);
+                // System.out.println(lastPacmanIndex + " " + " " + currentNode);
+                if (lastPacmanIndex == currentNode) {
 
-                // try {
-                //     if (pillIndex != -1 && game.isPillStillAvailable(pillIndex)) {
-                //         // GameView.addPoints(game, Color.blue, currentNode);
-                //         currentSegment.pillsCount++;
-                //     } else if (powerPillIndex != -1 && game.isPowerPillStillAvailable(powerPillIndex))
-                //         currentSegment.powerPillsCount++;
-                // } catch (Exception e) {
-                //     System.out.println("currentNode:" + currentNode + ", pillIndex:" + pillIndex + ", powerPillIndex:"
-                //             + powerPillIndex
-                //             + ", please increase executor radius size by setting Executor.Builder().setSightLimit(1000)");
-                //     throw e;
-                // }
-
-                // Segment contains ghost(s), not safe if ghost direction is opposite of segment
-                // direction and is not edible
-                if (ghostNodeIndices.contains(currentNode))
-                    for (GHOST ghost : ghosts) {
-                        if (game.getGhostCurrentNodeIndex(ghost) == currentNode) {
-                            currentSegment.ghosts.add(ghost);
-
-                            if ((!game.isGhostEdible(ghost)
-                                    || (game.isGhostEdible(ghost) && game.getGhostEdibleTime(ghost) < 2))
-                                    && game.getGhostLastMoveMade(ghost) == currentSegment.direction.opposite()
-                                    && game.getEuclideanDistance(ghostCurrentNodeIndex,
-                                            currentNode) <= minGhostDistance) {
-                                currentSegment.safe = false;
-                                if (currentSegment.parent != null)
-                                    currentSegment.parent.safe = false;
-                            }
-                        }
+                    if (game.isGhostEdible(ghost) && game.getEuclideanDistance(lastPacmanIndex,
+                            currentNode) <= minPacmanDistance || game.getGhostEdibleTime(ghost) > 0
+                            || closeToPower(game)) {
+                        currentSegment.safe = false;
+                        if (currentSegment.parent != null)
+                            currentSegment.parent.safe = false;
                     }
+
+                    if (!game.isGhostEdible(ghost) || game.getEuclideanDistance(lastPacmanIndex,
+                            currentNode) <= minPacmanDistance) {
+                        currentSegment.value += 10;
+
+                    }
+                }
 
                 // Check if length is max
                 if (currentSegment.lengthSoFar >= maxPathLength) {
@@ -429,14 +407,11 @@ public class POGhostAstar extends IndividualGhostController {
 
                     paths.add(path);
 
-                    // Pop out the latest pending segment and set it as current segment
                     if (!pendingSegments.isEmpty()) {
                         currentSegment = pendingSegments.remove(pendingSegments.size() - 1);
                         currentNode = currentSegment.start;
                         currentSegment.lengthSoFar++;
-                        // System.out.println("Current segment " + "start:" + currentSegment.start + ",
-                        // direction:" + currentSegment.direction + ", length so far:" +
-                        // currentSegment.lengthSoFar + " begins");
+
                         continue;
                     } else
                         break;
@@ -460,8 +435,7 @@ public class POGhostAstar extends IndividualGhostController {
                         segment.start = neighborNode;
                         segment.direction = possibleMove;
                         segment.parent = parentSegment;
-                        segment.pillsCount = parentSegment.pillsCount;
-                        segment.powerPillsCount = parentSegment.powerPillsCount;
+                        segment.value = parentSegment.value;
                         segment.lengthSoFar = currentSegment.lengthSoFar;
                         segment.safe = parentSegment.safe;
 
@@ -482,8 +456,8 @@ public class POGhostAstar extends IndividualGhostController {
         // Required to calculate the required data in each path
         for (Path path : paths)
             path.process();
-
-        System.out.println("\nPath search complete found " + paths.size() + " path");
+        System.out.println(ghost.name());
+        System.out.println("Path search complete found " + paths.size() + " path");
         return paths;
     }
 }
