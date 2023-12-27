@@ -50,8 +50,8 @@ public class POGhostMCTS extends IndividualGhostController {
     Random rnd = new Random();
 
     
-	public static final int GHOST_LOST_LIFE_VALUE = -500;
-	public static final int GHOST_RETAIN_LIFE_VALUE = 0;
+	public static final int GHOST_LOST_LIFE_VALUE = -5;
+	public static final int GHOST_RETAIN_LIFE_VALUE = 10;
 	public static final int PAC_LOST_LIFE_VALUE = 500;
 	public static final int CLOSE_TO_POWER = -10;
 	private static final int SIM_STEPS = 200; //simulations steps
@@ -97,13 +97,11 @@ public class POGhostMCTS extends IndividualGhostController {
             
                    
 
-            System.out.println("Total time: " + game.getTotalTime());
-			System.out.println("Current Total of Number Ghost Eaten: " + totalNumOfGhostEaten);
+            
             return MctsSearch(game, 38);
         }
 		
-        System.out.println("Total time: " + game.getTotalTime());
-		System.out.println("Current Total of Number Ghost Eaten: " + totalNumOfGhostEaten);
+        
         return null;
 
     }
@@ -178,7 +176,7 @@ public class POGhostMCTS extends IndividualGhostController {
 
 	private boolean dieTest(MctsNode v, MctsNode node) {
 		
-		Controller<MOVE> pacManController = new SecondCustomAI();
+		Controller<MOVE> pacManController = new FirstCustomAI(false);
 		Controller<EnumMap<GHOST,MOVE>> ghostController = ghosts;
     	
 		Game game = v.getState().getGame().copy();
@@ -218,8 +216,8 @@ public class POGhostMCTS extends IndividualGhostController {
 
 	private float normalize(float x) {	
 		
-		float min = -2500; 
-		float max = 500; 
+		float min = -5; 
+		float max = 2000; 
 		float range = max - min;
 		float inZeroRange = (x - min);
 		float norm = inZeroRange / range;
@@ -236,7 +234,7 @@ public class POGhostMCTS extends IndividualGhostController {
 		
 		int result = runExperimentWithAvgScoreLimit(node, SIM_STEPS);
 		
-		return result -= root.getState().getGame().getScore(); 
+		return result; 
 
 	}
 
@@ -288,7 +286,7 @@ public class POGhostMCTS extends IndividualGhostController {
 	
 	public int runExperimentWithAvgScoreLimit(MctsNode node, int steps) {
 		
-		Controller<MOVE> pacManController = new SecondCustomAI();
+		Controller<MOVE> pacManController = new FirstCustomAI(false);
 		Controller<EnumMap<GHOST,MOVE>> ghostController = ghosts;
     	
 		
@@ -329,6 +327,8 @@ public class POGhostMCTS extends IndividualGhostController {
 			if (game.wasGhostEaten(ghost)){
 				ghostWasEaten = true;
 				break;
+			}else{
+				bonus += GHOST_RETAIN_LIFE_VALUE;
 			}
 			
 			
@@ -338,9 +338,7 @@ public class POGhostMCTS extends IndividualGhostController {
 		
 		if (ghostWasEaten == true){
 			bonus += GHOST_LOST_LIFE_VALUE;
-		} else{
-			bonus += GHOST_RETAIN_LIFE_VALUE;
-		}
+		} 
 		
 		return bonus;
 	}

@@ -80,7 +80,7 @@ public class MctsNode {
 		if (junction != -1){
 			updateDirection(nextMove);
 			
-			MctsState childState = runExperimentUntilJunction(new SecondCustomAI(), new AggressiveGhosts(), state.getGame(), junction, nextMove);
+			MctsState childState = runExperimentUntilJunction(new FirstCustomAI(false), new AggressiveGhosts(), state.getGame(), junction, nextMove);
 			if (childState == null || childState.getGame() == null){
 				return this;
 			}

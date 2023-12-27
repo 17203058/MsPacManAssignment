@@ -55,7 +55,16 @@ public class SecondCustomAI extends Controller<MOVE>{
 	Maze maze3;
 	boolean useScript = false;
 	MOVE scriptMove = MOVE.LEFT;
+	private static boolean printout = true;
 	
+	public SecondCustomAI(){
+
+	}
+
+	public SecondCustomAI(boolean printout){
+		SecondCustomAI.printout = printout;
+	}
+
 	@Override
 	public MOVE getMove(Game game, long timeDue) {
 		
@@ -86,8 +95,11 @@ public class SecondCustomAI extends Controller<MOVE>{
 			
 
 		numOfMovements++;
-		System.out.println("Total time: " + game.getTotalTime());
-		System.out.println("Current Total of Number Ghost Eaten: " + totalNumOfGhostEaten);
+		if(printout){
+			System.out.println("Total time: " + game.getTotalTime());
+			System.out.println("Current Total of Number Ghost Eaten: " + totalNumOfGhostEaten);
+		}
+		
 		return MctsSearch(game, 38);
 
 		

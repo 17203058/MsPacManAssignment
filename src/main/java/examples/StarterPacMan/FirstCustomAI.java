@@ -33,6 +33,7 @@ public class FirstCustomAI extends PacmanController {
     int minGhostDistanceBase = 100; // 80, 100, 100
     private List<Path> paths = new ArrayList<>();
     private static int totalNumberOfGhostEaten=0;
+    private static boolean printout = true;
 
 
     private int getRandomInt(int min, int max) {
@@ -42,6 +43,14 @@ public class FirstCustomAI extends PacmanController {
 
         Random r = new Random();
         return r.nextInt((max - min) + 1) + min;
+    }
+
+    public FirstCustomAI(){
+
+    }
+
+    public FirstCustomAI(boolean printout){
+        FirstCustomAI.printout = printout;
     }
 
     @Override
@@ -107,14 +116,21 @@ public class FirstCustomAI extends PacmanController {
             }
         }
 
-        System.out.println("time : "+game.getTotalTime());
+        
 
         if (game.getNumGhostsEaten()>0) {
                 totalNumberOfGhostEaten+=game.getNumGhostsEaten();
         
         }
+
+        if(printout){
+            System.out.println("time : "+game.getTotalTime());
             System.out.println("number of ghost eaten : "+totalNumberOfGhostEaten);
-                return bestPathMove;
+        }else{
+            System.out.println("not printing");
+        }
+        
+        return bestPathMove;
     }
 
     private MOVE getRandomMove() {

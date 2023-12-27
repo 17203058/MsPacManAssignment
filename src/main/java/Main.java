@@ -61,16 +61,17 @@ public class Main {
         int speed = 1; // smaller number will run faster
 
 
-        MASController ghosts = new examples.StarterGhostAstar.POGhostsAstar();
+        // MASController ghosts = new examples.StarterGhostAstar.POGhostsAstar();
+        MASController ghosts = new examples.StarterGhostMCTS.POGhostsMCTS();
         // MASController ghosts = new POCommGhosts();
 
 
 
 
-        executor.runGame(new TreeSearchPacMan(), ghosts, speed);
+        // executor.runGame(new TreeSearchPacMan(), ghosts, speed);
         // executor.runGame(new MyPacMan(), ghosts, speed);
         // executor.runGame(new InformationSetMCTSPacMan(), ghosts, speed);
-        // executor.runGame(new SecondCustomAI(), ghosts, speed);
+        executor.runGame(new FirstCustomAI(), ghosts, speed);
         // executor.runGame(new ThirdCustomAI(), ghosts, speed);
 
      
