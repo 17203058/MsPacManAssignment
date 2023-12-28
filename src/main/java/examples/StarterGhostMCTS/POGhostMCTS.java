@@ -296,7 +296,7 @@ public class POGhostMCTS extends IndividualGhostController {
 		 
 
 		int s = 0;
-		int bonus = 0;
+		int score = 0;
 		boolean ghostWasEaten = false;
 				
 		while(!game.gameOver())
@@ -313,13 +313,13 @@ public class POGhostMCTS extends IndividualGhostController {
 	        s++;
 	        
 			if(closeToPower(game)){
-				bonus += CLOSE_TO_POWER;
+				score += CLOSE_TO_POWER;
 			}	
 
 	        int livesAfter = game.getPacmanNumberOfLivesRemaining();
 			
 			if (livesAfter < livesBefore){
-				bonus += PAC_LOST_LIFE_VALUE;
+				score += PAC_LOST_LIFE_VALUE;
 				livesBefore = livesAfter;
 				
 			}
@@ -328,7 +328,7 @@ public class POGhostMCTS extends IndividualGhostController {
 				ghostWasEaten = true;
 				break;
 			}else{
-				bonus += GHOST_RETAIN_LIFE_VALUE;
+				score += GHOST_RETAIN_LIFE_VALUE;
 			}
 			
 			
@@ -337,10 +337,10 @@ public class POGhostMCTS extends IndividualGhostController {
 		
 		
 		if (ghostWasEaten == true){
-			bonus += GHOST_LOST_LIFE_VALUE;
+			score += GHOST_LOST_LIFE_VALUE;
 		} 
 		
-		return bonus;
+		return score;
 	}
 
 	
